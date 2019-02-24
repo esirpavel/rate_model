@@ -8,10 +8,12 @@ class RateNetwork:
         'eps', 'conn_width', 'seed', 'U', 'I0', 'tau_d', 'tau_f', 'tau', 'alpha', 
         'stim_width', 'stim_ampl', 'stim_duration', 'stim_pos'
     ]
-       
-    def gFun(self, x, alpha=1.5):
-        return alpha*np.log1p(np.exp(x/alpha))
-    
+          
+    def gFun(self, x, alpha=1.5, cutoff=10.):
+        res = x.copy()
+        res[np.nonzero(x < cutoff)] = alpha*np.log1p(np.exp(x[np.nonzero(x < cutoff)]/alpha))
+        return res
+
     @staticmethod
     def get_angle(m, axis=-1):
         pos = np.linspace(-np.pi, np.pi, m.shape[axis], endpoint=False)
@@ -44,7 +46,6 @@ class RateNetwork:
         self.ActRE = np.zeros((n_rstep, N), dtype='float32')
         self.ActRI = np.zeros(n_rstep, dtype='float32')
         self.tm = np.linspace(0, sim_time, n_rstep)
-    
     
     def set_weights(self, J0, J1, J_EI, J_IE, eps=0., conn_width=1.3, conn_type='gauss', seed=0):
         self.J0 = J0
@@ -103,37 +104,47 @@ class RateNetwork:
         np.savez(fname, u=self.ActU, x=self.ActX, hE=self.ActHE, hI=self.ActHI, 
                  rE=self.ActRE, rI=self.ActRI)
         
-    def simulate_facil(self):
+    def simulate_facil(self, backend='python'):
         self.x[:], self.u[:], self.hE[:], self.hI = self.x_iv, self.u_iv, self.hE_iv, self.hI_iv
-
-        for i in range(0, self.n_istep):
-            self.Iext[:] = 0.
-            if i < self.stim_duration/self.dt:
-                dx1 = np.mod(self.pos - np.radians(self.stim_pos) + np.pi, 2*np.pi) - np.pi
-#                self.Iext[:] = self.stim_ampl*np.exp(-(dx1/self.stim_width)**2/2)
-                self.Iext[:] = self.stim_ampl*np.cos(dx1)
+        
+        if backend == 'c':
+            import cycover_ring as rn
+            rn.set_calc_params(self.N, self.n_istep, self.dt, int(self.sampl_dt/self.dt))
+            rn.set_params(self.U, self.J_IE, self.J_EI, self.tau, self.tau_d, self.tau_f, self.I0, self.alpha)
+            rn.init_arrays(self.x, self.u, self.hE, self.hI, self.W, self.ActX, self.ActU, self.ActHE, self.ActHI)
+            rn.integrate()
             
-            rE = self.gFun(self.hE, self.alpha)
-            rI = self.gFun(self.hI, self.alpha)
-            
-            dx = (1.0 - self.x)/self.tau_d - self.u*self.x*rE
-            du = (self.U - self.u)/self.tau_f + self.U*(1 - self.u)*rE
-            dhE = (-self.hE + np.dot(self.W, self.u*self.x*rE) - self.J_EI*rI + self.I0 + self.Iext)/self.tau
-            dhI = (-self.hI + self.J_IE*np.sum(rE)/self.N)/self.tau
-            
-            self.x[:] = self.x + dx*self.dt
-            self.u[:] = self.u + du*self.dt
-            self.hE[:] = self.hE + dhE*self.dt
-            self.hI = self.hI + dhI*self.dt
-            
-            if i % int(self.sampl_dt/self.dt) == 0:
-                rec_i = int(i/(self.sampl_dt/self.dt))
-                self.ActU[rec_i] = self.u
-                self.ActX[rec_i] = self.x
-                self.ActHE[rec_i] = self.hE
-                self.ActHI[rec_i] = self.hI
-                self.ActRE[rec_i] = rE
-                self.ActRI[rec_i] = rI
+            self.ActRE = self.gFun(self.ActHE)
+            self.ActRI = self.gFun(self.ActHI)
+        elif backend == 'python':
+            for i in range(0, self.n_istep):
+                self.Iext[:] = 0.
+                if i < self.stim_duration/self.dt:
+                    dx1 = np.mod(self.pos - np.radians(self.stim_pos) + np.pi, 2*np.pi) - np.pi
+    #                self.Iext[:] = self.stim_ampl*np.exp(-(dx1/self.stim_width)**2/2)
+                    self.Iext[:] = self.stim_ampl*np.cos(dx1)
+                
+                rE = self.gFun(self.hE, self.alpha)
+                rI = self.gFun(self.hI, self.alpha)
+                
+                dx = (1.0 - self.x)/self.tau_d - self.u*self.x*rE
+                du = (self.U - self.u)/self.tau_f + self.U*(1 - self.u)*rE
+                dhE = (-self.hE + np.dot(self.W, self.u*self.x*rE) - self.J_EI*rI + self.I0 + self.Iext)/self.tau
+                dhI = (-self.hI + self.J_IE*np.sum(rE)/self.N)/self.tau
+                
+                self.x[:] = self.x + dx*self.dt
+                self.u[:] = self.u + du*self.dt
+                self.hE[:] = self.hE + dhE*self.dt
+                self.hI = self.hI + dhI*self.dt
+                
+                if i % int(self.sampl_dt/self.dt) == 0:
+                    rec_i = int(i/(self.sampl_dt/self.dt))
+                    self.ActU[rec_i] = self.u
+                    self.ActX[rec_i] = self.x
+                    self.ActHE[rec_i] = self.hE
+                    self.ActHI[rec_i] = self.hI
+                    self.ActRE[rec_i] = rE
+                    self.ActRI[rec_i] = rI
         print(np.mean(self.ActRE))
 
     @staticmethod
@@ -169,7 +180,7 @@ class RateNetwork:
 if __name__ == '__main__':
     params_dict_Itskov = {
         # main params
-        'sim_time': 5.0,
+        'sim_time': 10.,
         'dt': 0.001,
         'sampl_dt': 0.001,
         'N': 90,
@@ -178,7 +189,7 @@ if __name__ == '__main__':
         'J0': -10.0,
         'J1': 16.0,
         'J_EI': 0.0,
-        'J_IE': 1.5,  # @TODO
+        'J_IE': 0.0,  # @TODO
         'eps': 0.0,
         'conn_width': 1.3, # @TODO
         'conn_type' : 'cos',
@@ -233,5 +244,6 @@ if __name__ == '__main__':
 
     rate_network = RateNetwork.init_all_params(**params_dict_Itskov)
     rate_network.set_initial_values(u=params_dict_Itskov['U'], hE=10*np.cos(rate_network.pos))
-    rate_network.simulate_facil()
+    
+    rate_network.simulate_facil(backend = 'c')
     rate_network.plot_simul()
