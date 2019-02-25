@@ -10,9 +10,12 @@ class RateNetwork:
     ]
           
     def gFun(self, x, alpha=1.5, cutoff=10.):
-        res = x.copy()
-        res[np.nonzero(x < cutoff)] = alpha*np.log1p(np.exp(x[np.nonzero(x < cutoff)]/alpha))
-        return res
+        if type(x) == np.ndarray:
+            res = x.copy()
+            res[np.nonzero(x < cutoff)] = alpha*np.log1p(np.exp(x[np.nonzero(x < cutoff)]/alpha))
+            return res
+        else:
+            return alpha*np.log1p(np.exp(x/alpha)) if x < cutoff else x
 
     @staticmethod
     def get_angle(m, axis=-1):
@@ -33,12 +36,11 @@ class RateNetwork:
         self.dx = np.mod(self.dx + np.pi, 2*np.pi) - np.pi
         del X, Y
         
-        self.Iext = np.zeros(N)
         self.x = np.ones(N)
         self.u = np.ones(N)
         self.hE = np.zeros(N)
         
-        n_rstep = int((sim_time + sampl_dt)/sampl_dt)
+        n_rstep = int((sim_time)/sampl_dt)
         self.ActU = np.zeros((n_rstep, N), dtype='float32')
         self.ActX = np.zeros((n_rstep, N), dtype='float32')
         self.ActHE = np.zeros((n_rstep, N), dtype='float32')
@@ -47,7 +49,8 @@ class RateNetwork:
         self.ActRI = np.zeros(n_rstep, dtype='float32')
         self.tm = np.linspace(0, sim_time, n_rstep)
     
-    def set_weights(self, J0, J1, J_EI, J_IE, eps=0., conn_width=1.3, conn_type='gauss', seed=0):
+    def set_weights(self, J0, J1, J_EI, J_IE, eps=0., conn_width=1.3, 
+                    conn_type='gauss', seed=0):
         self.J0 = J0
         self.J1 = J1
         self.J_EI = J_EI
@@ -83,18 +86,12 @@ class RateNetwork:
         self.alpha = alpha
         
         self.u[:] = self.U
-        
-    def set_stim_params(self, stim_width, stim_ampl, stim_duration, stim_pos):
-        self.stim_width = stim_width
-        self.stim_ampl = stim_ampl
-        self.stim_duration = stim_duration
-        self.stim_pos = stim_pos
-    
     
     def plot_simul(self):
         pl.figure(figsize = (10, 8))
         pl.pcolormesh(self.tm, np.degrees(self.pos), self.ActRE.T)
         pl.plot(self.tm, np.degrees(self.get_angle(self.ActRE)), lw=3., c='C3')
+        pl.plot(self.tm, np.degrees(self.get_angle(self.ActU)), lw=3., c='C4')
         pl.xlim((0, self.sim_time))
         pl.xlabel('Time (s)')
         pl.ylabel(r'$\theta$')
@@ -103,7 +100,33 @@ class RateNetwork:
     def save_results(self, fname):
         np.savez(fname, u=self.ActU, x=self.ActX, hE=self.ActHE, hI=self.ActHI, 
                  rE=self.ActRE, rI=self.ActRI)
+    
+    def process_stumulus(self, t):
+        if self.stim_idx < len(self.stim_duration):
+            if ((not self.is_stimulating) and 
+                    t == int(self.stim_start[self.stim_idx]/self.dt)):
+                dx1 = np.mod(self.pos - np.radians(self.stim_pos) + np.pi, 2*np.pi) - np.pi
+    #                self.Iext[:] = self.stim_ampl*np.exp(-(dx1/self.stim_width)**2/2)
+                self.Iext[:] = self.stim_ampl*np.cos(dx1/stim_width)
+                self.is_stimulating = True
+            elif (self.is_stimulating and 
+                    t == int((self.stim_start[self.stim_idx] + 
+                              self.stim_duration[self.stim_idx])/self.dt)):
+                self.is_stimulating = False
+                self.Iext[:] = 0.
+                self.stim_idx += 1
+    
+    def set_stimuli(self, stim_start, stim_duration, stim_ampl, stim_pos, stim_width):
+        self.Iext = np.zeros(self.N)
+        self.stim_idx = 0
+        self.is_stimulating = False
         
+        self.stim_start = stim_start
+        self.stim_duration = stim_duration
+        self.stim_ampl = stim_ampl
+        self.stim_pos = stim_pos
+        self.stim_width = stim_width
+    
     def simulate_facil(self, backend='python'):
         self.x[:], self.u[:], self.hE[:], self.hI = self.x_iv, self.u_iv, self.hE_iv, self.hI_iv
         
@@ -118,11 +141,7 @@ class RateNetwork:
             self.ActRI = self.gFun(self.ActHI)
         elif backend == 'python':
             for i in range(0, self.n_istep):
-                self.Iext[:] = 0.
-                if i < self.stim_duration/self.dt:
-                    dx1 = np.mod(self.pos - np.radians(self.stim_pos) + np.pi, 2*np.pi) - np.pi
-    #                self.Iext[:] = self.stim_ampl*np.exp(-(dx1/self.stim_width)**2/2)
-                    self.Iext[:] = self.stim_ampl*np.cos(dx1)
+                self.process_stumulus(i)
                 
                 rE = self.gFun(self.hE, self.alpha)
                 rI = self.gFun(self.hI, self.alpha)
@@ -145,17 +164,16 @@ class RateNetwork:
                     self.ActHI[rec_i] = self.hI
                     self.ActRE[rec_i] = rE
                     self.ActRI[rec_i] = rI
-        print(np.mean(self.ActRE))
+        else:
+            raise RuntimeError('Non-existent backend')
 
     @staticmethod
     def init_all_params(sim_time, dt, sampl_dt, N, J0, J1, J_EI, J_IE, 
-                        eps, conn_width, conn_type, seed, U, I0, tau_d, tau_f, tau, alpha, 
-                        stim_width, stim_ampl, stim_duration, stim_pos):
+                        eps, conn_width, conn_type, seed, U, I0, tau_d, tau_f, tau, alpha):
 
         self = RateNetwork(sim_time, dt, sampl_dt, N)
         self.set_weights(J0, J1, J_EI, J_IE, eps, conn_width, conn_type, seed)
         self.set_params(U, I0, tau_d, tau_f, tau, alpha)
-        self.set_stim_params(stim_width, stim_ampl, stim_duration, stim_pos)
         self.set_initial_values(u=U)
         
         return self
@@ -202,12 +220,6 @@ if __name__ == '__main__':
         'tau_f': 1.,
         'tau': 0.01,
         'alpha': 1.5,
-        
-        # stumulation params
-        'stim_width': 0.2, # @TODO
-        'stim_ampl': 0.0,
-        'stim_duration': 0.05,
-        'stim_pos': 0.0
     }
     
     params_dict_Tsodyks = {
@@ -234,16 +246,18 @@ if __name__ == '__main__':
         'tau_f': 1.5,
         'tau': 0.01,
         'alpha': 1.5,
-        
-        # stumulation params
-        'stim_width': 0.2,
-        'stim_ampl': 65.0,
-        'stim_duration': 0.03,
-        'stim_pos': 0.0 
     }
 
     rate_network = RateNetwork.init_all_params(**params_dict_Itskov)
     rate_network.set_initial_values(u=params_dict_Itskov['U'], hE=10*np.cos(rate_network.pos))
+    
+    stim_start = [1.]
+    stim_duration = [0.1]
+    stim_ampl = [5.0]
+    stim_pos = [50.0]
+    stim_width = [1.]
+    
+    rate_network.set_stimuli(stim_start, stim_duration, stim_ampl, stim_pos, stim_width)
     
     rate_network.simulate_facil(backend = 'c')
     rate_network.plot_simul()
