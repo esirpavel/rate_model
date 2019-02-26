@@ -61,21 +61,24 @@ class RateNetwork:
         
         if conn_type == 'cos':
             self.W = (J0 + J1*np.cos(self.dx))/self.N + W_heter
+        elif conn_type == 'gauss':
+            W =  np.exp(-self.dx**2/(2*conn_width**2))
+            self.W = (self.J0 + self.J1*W/np.amax(W))/self.N + W_heter
         elif conn_type == 'trunc_cos':
             conn_kernel = lambda x, J0=J0, J1=J1:  J1*np.cos(x) if np.abs(x) < np.arccos(J0/J1) else J0
             conn_kernel_vect = np.vectorize(conn_kernel)
             self.W = conn_kernel_vect(conn_width*self.dx)/self.N + W_heter
-        elif conn_type == 'gauss':
-            W =  np.exp(-self.dx**2/(2*conn_width**2))
-            self.W = (self.J0 + self.J1*W/np.amax(W))/self.N + W_heter
         else:
             raise RuntimeError('Non-existent connectivity kernel type')
     
-    def set_initial_values(self, hE=0., hI=0., x=1., u=1.):
+    def set_initial_values(self, hE=0., hI=0., x=1., u=None):
         self.hE_iv = hE
         self.hI_iv = hI
         self.x_iv = x
-        self.u_iv = u
+        if u is None:
+            self.u_iv = self.U
+        else:
+            self.u_iv = u
     
     def set_params(self, U, I0, tau_d, tau_f, tau, alpha):
         self.U = U
@@ -105,10 +108,12 @@ class RateNetwork:
         if self.stim_idx < len(self.stim_duration):
             if ((not self.is_stimulating) and 
                     t == int(self.stim_start[self.stim_idx]/self.dt)):
-                dx1 = np.mod(self.pos - np.radians(self.stim_pos) + np.pi, 2*np.pi) - np.pi
-    #                self.Iext[:] = self.stim_ampl*np.exp(-(dx1/self.stim_width)**2/2)
-                self.Iext[:] = self.stim_ampl*np.cos(dx1/stim_width)
+                dx1 = np.mod(self.pos - np.radians(self.stim_pos[self.stim_idx]) + np.pi, 2*np.pi) - np.pi
                 self.is_stimulating = True
+                if self.stim_type[self.stim_idx] == 'cos':
+                    self.Iext[:] = self.stim_ampl[self.stim_idx]*np.cos(dx1/stim_width[self.stim_idx])
+                elif self.stim_type[self.stim_idx] == 'gauss':
+                    self.Iext[:] = self.stim_ampl[self.stim_idx]*np.exp(-(dx1/self.stim_width[self.stim_idx])**2/2)
             elif (self.is_stimulating and 
                     t == int((self.stim_start[self.stim_idx] + 
                               self.stim_duration[self.stim_idx])/self.dt)):
@@ -116,7 +121,8 @@ class RateNetwork:
                 self.Iext[:] = 0.
                 self.stim_idx += 1
     
-    def set_stimuli(self, stim_start, stim_duration, stim_ampl, stim_pos, stim_width):
+    def set_stimuli(self, stim_start, stim_duration, stim_ampl, stim_pos, 
+                    stim_width, stim_type):
         self.Iext = np.zeros(self.N)
         self.stim_idx = 0
         self.is_stimulating = False
@@ -126,15 +132,31 @@ class RateNetwork:
         self.stim_ampl = stim_ampl
         self.stim_pos = stim_pos
         self.stim_width = stim_width
-    
+        self.stim_type = stim_type
+        
     def simulate_facil(self, backend='python'):
         self.x[:], self.u[:], self.hE[:], self.hI = self.x_iv, self.u_iv, self.hE_iv, self.hI_iv
         
         if backend == 'c':
             import cycover_ring as rn
             rn.set_calc_params(self.N, self.n_istep, self.dt, int(self.sampl_dt/self.dt))
-            rn.set_params(self.U, self.J_IE, self.J_EI, self.tau, self.tau_d, self.tau_f, self.I0, self.alpha)
-            rn.init_arrays(self.x, self.u, self.hE, self.hI, self.W, self.ActX, self.ActU, self.ActHE, self.ActHI)
+            rn.set_params(self.U, self.J_IE, self.J_EI, self.tau, self.tau_d, 
+                          self.tau_f, self.I0, self.alpha)
+            rn.init_arrays(self.x, self.u, self.hE, self.hI, self.W, self.ActX, 
+                           self.ActU, self.ActHE, self.ActHI)
+            
+                        # @TODO add maping from string type to integer
+            map_dict = {'cos': 1, 'gauss': 2, 'trunc_cos': 3, 'mask': 4}
+            st_type = np.array([*map(map_dict.get, self.stim_type)]).astype('uint32')
+            rn.set_stimuli(
+                (np.array(self.stim_start)/self.dt).astype('uint32'), 
+                (np.array(self.stim_duration)/self.dt).astype('uint32'), 
+                np.array(self.stim_ampl), 
+                np.radians(stim_pos), 
+                np.array(stim_width), 
+                st_type,
+                len(self.stim_start))
+            
             rn.integrate()
             
             self.ActRE = self.gFun(self.ActHE)
@@ -198,9 +220,9 @@ class RateNetwork:
 if __name__ == '__main__':
     params_dict_Itskov = {
         # main params
-        'sim_time': 10.,
+        'sim_time': 2.,
         'dt': 0.001,
-        'sampl_dt': 0.001,
+        'sampl_dt': 0.01,
         'N': 90,
     
         # connectivity params
@@ -249,15 +271,26 @@ if __name__ == '__main__':
     }
 
     rate_network = RateNetwork.init_all_params(**params_dict_Itskov)
-    rate_network.set_initial_values(u=params_dict_Itskov['U'], hE=10*np.cos(rate_network.pos))
+    rate_network.set_initial_values(hE=0*np.cos(rate_network.pos))
     
-    stim_start = [1.]
-    stim_duration = [0.1]
+    # stimulating params for Itskov
+    stim_start = [.1]
+    stim_duration = [.05]
     stim_ampl = [5.0]
-    stim_pos = [50.0]
+    stim_pos = [-50.0]
     stim_width = [1.]
+    stim_type = ['cos']
     
-    rate_network.set_stimuli(stim_start, stim_duration, stim_ampl, stim_pos, stim_width)
+    # stimulating params for Tsodyks
+    # stim_start = [.0]
+    # stim_duration = [.05]
+    # stim_ampl = [65.0]
+    # stim_pos = [0.0]
+    # stim_width = [.2]
+    # stim_type = ['gauss']
+    
+    rate_network.set_stimuli(stim_start, stim_duration, stim_ampl, stim_pos, 
+                             stim_width, stim_type)
     
     rate_network.simulate_facil(backend = 'c')
     rate_network.plot_simul()

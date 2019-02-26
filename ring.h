@@ -15,6 +15,9 @@ void setParams(double U, double J_IE, double J_EI, double tau, double tau_d, dou
 void initArrays(double* x, double* u, double* hE, double hI,
                 double* W, float* xRes, float* uRes, float* hERes, float* hIRes);
 
+void setStimuli(unsigned* stim_start, unsigned* stim_duration, double* stim_ampl, 
+                double* stim_pos, double* stim_width, unsigned* stim_type, unsigned num_stim);
+
 void c_integrate();
 
 #endif /* RING_H_ */

@@ -14,6 +14,9 @@ cdef extern from "ring.h":
 
     void initArrays(double* x, double* u, double* hE, double hI, double* W, float* xRes, float* uRes, float* hERes, float* hIRes)
     
+    void setStimuli(unsigned* stim_start, unsigned* stim_duration, double* stim_ampl, 
+                    double* stim_pos, double* stim_width, unsigned* stim_type, unsigned num_stim)
+    
     void c_integrate()
     
 def set_calc_params(unsigned N, Tsim, h, recH):
@@ -40,7 +43,22 @@ def init_arrays(np.ndarray[np.float64_t, ndim=1] x,
                <float*> xRes.data, 
                <float*> uRes.data,
                <float*> hERes.data,
-               <float*> hIRes.data) 
+               <float*> hIRes.data)
+
+def set_stimuli(np.ndarray[np.uint32_t, ndim=1] stim_start, 
+                np.ndarray[np.uint32_t, ndim=1] stim_duration, 
+                np.ndarray[np.float64_t, ndim=1] stim_ampl, 
+                np.ndarray[np.float64_t, ndim=1] stim_pos, 
+                np.ndarray[np.float64_t, ndim=1] stim_width, 
+                np.ndarray[np.uint32_t, ndim=1] stim_type, 
+                num_stim):
+    setStimuli(<unsigned*> stim_start.data, 
+                <unsigned*> stim_duration.data, 
+                <double*> stim_ampl.data, 
+                <double*> stim_pos.data, 
+                <double*> stim_width.data, 
+                <unsigned*> stim_type.data, 
+                num_stim)
     
 def integrate():
     c_integrate()
