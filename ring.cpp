@@ -119,12 +119,16 @@ double stimFunc(double x, double width, unsigned type){
         case 2:
             return exp(-x*x/(width*width*2.0));
         case 3:
-            // @TODO here should be truncated cosyne
-            break;
-        case 4: 
-            // @TODO uniform mask
-            break;
-    } 
+            // truncated cosyne is used to stimulate
+            if (std::abs(x/width) < M_PI_2){
+                return cos(x/width);
+            } else {
+                return 0.;
+            }
+        case 4:
+            // uniform mask is used
+            return 1;
+    }
 }
 
 void process_stumulus(unsigned t){
