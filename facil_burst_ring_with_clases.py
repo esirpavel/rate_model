@@ -8,8 +8,9 @@ class RateNetwork:
         'eps', 'conn_width', 'seed', 'U', 'I0', 'tau_d', 'tau_f', 'tau', 'alpha', 
         'stim_width', 'stim_ampl', 'stim_duration', 'stim_pos'
     ]
-          
-    def gFun(self, x, alpha=1.5, cutoff=10.):
+    
+    @staticmethod
+    def gFun(x, alpha=1.5, cutoff=10.):
         if type(x) == np.ndarray:
             res = x.copy()
             res[np.nonzero(x < cutoff)] = alpha*np.log1p(np.exp(x[np.nonzero(x < cutoff)]/alpha))
@@ -100,7 +101,7 @@ class RateNetwork:
         pl.figure(figsize = (10, 8))
         pl.pcolormesh(self.tm, np.degrees(self.pos), self.ActRE.T)
         pl.plot(self.tm, np.degrees(self.get_angle(self.ActU)), lw=3., c='C3')
-        # pl.plot(self.tm, np.degrees(self.get_angle(self.ActRE)), lw=3.)
+        # pl.plot(self.tm, np.degrees(self.get_angle(self.ActRE)), '-o', lw=3.)
         pl.xlim((0, self.sim_time))
         pl.xlabel('Time (s)')
         pl.ylabel(r'$\theta$')
@@ -117,11 +118,11 @@ class RateNetwork:
                 dx1 = np.mod(self.pos - np.radians(self.stim_pos[self.stim_idx]) + np.pi, 2*np.pi) - np.pi
                 self.is_stimulating = True
                 if self.stim_type[self.stim_idx] == 'cos':
-                    self.Iext[:] = self.stim_ampl[self.stim_idx]*np.cos(dx1/stim_width[self.stim_idx])
+                    self.Iext[:] = self.stim_ampl[self.stim_idx]*np.cos(dx1/self.stim_width[self.stim_idx])
                 elif self.stim_type[self.stim_idx] == 'gauss':
                     self.Iext[:] = self.stim_ampl[self.stim_idx]*np.exp(-(dx1/self.stim_width[self.stim_idx])**2/2)
                 elif self.stim_type[self.stim_idx] == 'trunc_cos':
-                    self.Iext[:] = self.stim_ampl[self.stim_idx]*self.trunc_cos(dx1/stim_width, 0, 1)
+                    self.Iext[:] = self.stim_ampl[self.stim_idx]*self.trunc_cos(dx1/self.stim_width, 0, 1)
             elif (self.is_stimulating and 
                     t == int((self.stim_start[self.stim_idx] + 
                               self.stim_duration[self.stim_idx])/self.dt)):
@@ -160,8 +161,8 @@ class RateNetwork:
                 (np.array(self.stim_start)/self.dt).astype('uint32'), 
                 (np.array(self.stim_duration)/self.dt).astype('uint32'), 
                 np.array(self.stim_ampl), 
-                np.radians(stim_pos), 
-                np.array(stim_width), 
+                np.radians(self.stim_pos), 
+                np.array(self.stim_width), 
                 st_type,
                 len(self.stim_start))
             
@@ -224,115 +225,3 @@ class RateNetwork:
             rE = data['rE']
             rI = data['rI']
         return u, x, hE, hI, rE, rI
-
-if __name__ == '__main__':
-    params_dict_Itskov = {
-        # main params
-        'sim_time': 100.,
-        'dt': 0.001,
-        'sampl_dt': 0.01,
-        'N': 90,
-    
-        # connectivity params
-        'J0': -10.0,
-        'J1': 16.0,
-        'J_EI': 0.0,
-        'J_IE': 0.0,  # @TODO
-        'eps': 0.5,
-        'conn_width': 1.3, # @TODO
-        'conn_type' : 'cos',
-        'seed': 0,
-    
-        # actvity params
-        'U': 0.05,
-        'I0': 10.0,
-        'tau_d': 0.1,
-        'tau_f': 1.,
-        'tau': 0.01,
-        'alpha': 1.5,
-    }
-    
-    params_dict_Tsodyks = {
-        # main params
-        'sim_time': 2.,
-        'dt': 0.001,
-        'sampl_dt': 0.001,
-        'N': 90,
-    
-        # connectivity params
-        'J0': -10.0,
-        'J1': 40.0,
-        'J_EI': 6.0,
-        'J_IE': 1.5,
-        'eps': 0.0,
-        'conn_width': 1.3,
-        'conn_type' : 'gauss',
-        'seed': 0,
-    
-        # actvity params
-        'U': 0.3,
-        'I0': 5.0,
-        'tau_d': 0.3,
-        'tau_f': 1.5,
-        'tau': 0.01,
-        'alpha': 1.5,
-    }
-    
-    # Parameters from Yuanyuan
-    params_dict_Yuanyuan = {
-        # main params
-        'sim_time': 5.,
-        'dt': 0.001,
-        'sampl_dt': 0.001,
-        'N': 90,
-        
-        'J0': -1.*2*np.pi,
-        'J1': 12.*2*np.pi,
-        'J_EI': 1.9,
-        'J_IE': 1.8*2*np.pi,
-        'eps': 0.5,
-        'conn_width': 1/2.2,
-        'conn_type' : 'trunc_cos',
-        'seed': 0,
-        
-        'U': 0.3,
-        'I0': -0.1,
-        'tau_d': 0.3,
-        'tau_f': 4.0,
-        'tau': 0.01,
-        'alpha': 1.5,
-    }
-
-    
-    # stimulating params for Itskov
-    stim_start = [.1]
-    stim_duration = [.05]
-    stim_ampl = [5.0]
-    stim_pos = [0.0]
-    stim_width = [1.]
-    stim_type = ['cos']
-    
-    # stimulating params for Tsodyks
-    # stim_start = [.0]
-    # stim_duration = [.05]
-    # stim_ampl = [65.0]
-    # stim_pos = [0.0]
-    # stim_width = [.2]
-    # stim_type = ['gauss']
-    
-    # stimulating params for Yuanyuan
-    stim_start = [.0]
-    stim_duration = [.05]
-    stim_ampl = [390.0]
-    stim_pos = [0.0]
-    stim_width = [1/2.2]
-    stim_type = ['trunc_cos']
-    
-    rate_network = RateNetwork.init_all_params(**params_dict_Yuanyuan)
-
-    rate_network.set_initial_values(hE=0*np.cos(rate_network.pos))
-    rate_network.set_stimuli(stim_start, stim_duration, stim_ampl, stim_pos, 
-                             stim_width, stim_type)
-    
-    rate_network.simulate_facil(backend = 'c')
-    rate_network.plot_simul()
