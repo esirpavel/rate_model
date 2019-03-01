@@ -1,0 +1,6 @@
+*.o
+*.so
+.*
+!.gitignore
+*/
+cycover_ring.cpp
