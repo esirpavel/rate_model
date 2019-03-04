@@ -63,16 +63,16 @@ if __name__ == '__main__':
     # Parameters from Yuanyuan
     params_dict_Yuanyuan = {
         # main params
-        'sim_time': 20.,
-        'dt': 0.001,
-        'sampl_dt': 0.01,
+        'sim_time': 200.,
+        'dt': 0.0005,
+        'sampl_dt': 0.0005,
         'N': 90,
         
         'J0': -1.*2*np.pi,
         'J1': 12.*2*np.pi,
         'J_EI': 1.9,
         'J_IE': 1.8*2*np.pi,
-        'eps': 2.,
+        'eps': 0.5,
         'conn_width': 1/2.2,
         'conn_type' : 'trunc_cos',
         'seed': 0,
@@ -111,19 +111,18 @@ if __name__ == '__main__':
         'stim_start': [.0],
         'stim_duration': [.05],
         'stim_ampl': [390.0],
-        'stim_pos': [30.0],
+        'stim_pos': [0.0],
         'stim_width': [1/2.2],
         'stim_type': ['trunc_cos']
     }
     
     #%%
-    rate_network = rm.RateNetwork.init_all_params(**params_dict_Yuanyuan)
-    rate_network.set_initial_values(hE=0*np.cos(rate_network.pos))
-    rate_network.set_stimuli(**stim_Yuanyuan)
+    # rate_network = rm.RateNetwork.init_all_params(**params_dict_Yuanyuan)
+    # rate_network.set_initial_values()
+    # rate_network.set_stimuli(**stim_Yuanyuan)
     
-    rate_network.simulate_facil(backend = 'c')
-    rate_network.plot_simul()
-    
+    # rate_network.simulate_facil(backend = 'c')
+    # rate_network.plot_simul()
     #%%
     stim_dict = stim_Yuanyuan
     param_dict = params_dict_Yuanyuan
@@ -139,4 +138,6 @@ if __name__ == '__main__':
         pl.plot(rate_network.tm[2:], np.degrees(rate_network.get_angle(rate_network.ActU))[2:], lw=3.)
         pl.xlabel("Time (s)")
         pl.ylabel(r'$\theta\, ({deg}^\circ)$')
-    # rate_network.plot_simul()
+    
+    pl.show()
+
