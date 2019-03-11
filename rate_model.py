@@ -97,8 +97,8 @@ class RateNetwork:
         
         self.u[:] = self.U
     
-    def plot_simul(self):
-        pl.figure(figsize = (10, 8))
+    def plot_simul(self, figsize = (10, 8)):
+        pl.figure(figsize=figsize)
         pl.pcolormesh(self.tm, np.degrees(self.pos), self.ActRE.T)
         pl.plot(self.tm, np.degrees(self.get_angle(self.ActU)), lw=3., c='C3')
         pl.plot(self.tm, np.degrees(self.get_angle(self.ActRE)), lw=3., c='C1')

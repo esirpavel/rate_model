@@ -10,7 +10,7 @@ import rate_model as rm
 if __name__ == '__main__':
     params_dict_Itskov = {
         # main params
-        'sim_time': 200.,
+        'sim_time': 150.,
         'dt': 0.001,
         'sampl_dt': 0.01,
         'N': 90,
@@ -33,33 +33,7 @@ if __name__ == '__main__':
         'tau': 0.01,
         'alpha': 1.5,
     }
-    
-    params_dict_Tsodyks = {
-        # main params
-        'sim_time': 2.,
-        'dt': 0.001,
-        'sampl_dt': 0.001,
-        'N': 90,
-    
-        # connectivity params
-        'J0': -10.0,
-        'J1': 40.0,
-        'J_EI': 6.0,
-        'J_IE': 1.5,
-        'eps': 0.0,
-        'conn_width': 1.3,
-        'conn_type' : 'gauss',
-        'seed': 0,
-    
-        # actvity params
-        'U': 0.3,
-        'I0': 5.0,
-        'tau_d': 0.3,
-        'tau_f': 1.5,
-        'tau': 0.01,
-        'alpha': 1.5,
-    }
-    
+       
     # Parameters from Yuanyuan
     params_dict_Yuanyuan = {
         # main params
@@ -96,16 +70,6 @@ if __name__ == '__main__':
         'stim_type': ['cos']
     }
 
-    # stimulating params for Tsodyks
-    stim_Tsodyks = {
-        'stim_start': [.0],
-        'stim_duration': [.05],
-        'stim_ampl': [65.0],
-        'stim_pos': [0.0],
-        'stim_width': [.2],
-        'stim_type': ['gauss']
-    }
-
     # stimulating params for Yuanyuan
     stim_Yuanyuan = {
         'stim_start': [.0],
@@ -117,15 +81,8 @@ if __name__ == '__main__':
     }
     
     #%%
-    # rate_network = rm.RateNetwork.init_all_params(**params_dict_Yuanyuan)
-    # rate_network.set_initial_values()
-    # rate_network.set_stimuli(**stim_Yuanyuan)
-    
-    # rate_network.simulate_facil(backend = 'c')
-    # rate_network.plot_simul()
-    #%%
-    stim_dict = stim_Yuanyuan
-    param_dict = params_dict_Yuanyuan
+    stim_dict = stim_Itskov
+    param_dict = params_dict_Itskov
     rate_network = rm.RateNetwork.init_all_params(**param_dict)
     for st_pos in range(-180, 180, 30):
         stim_dict['stim_pos'] = [st_pos]
