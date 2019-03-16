@@ -2,13 +2,7 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 class RateNetwork:
-
-    params_arr = [
-        'sim_time', 'dt', 'sampl_dt', 'N', 'J0', 'J1', 'J_EI', 'J_IE', 
-        'eps', 'conn_width', 'seed', 'U', 'I0', 'tau_d', 'tau_f', 'tau', 'alpha', 
-        'stim_width', 'stim_ampl', 'stim_duration', 'stim_pos'
-    ]
-    
+   
     @staticmethod
     def gFun(x, alpha=1.5, cutoff=10.):
         if type(x) == np.ndarray:
@@ -107,10 +101,6 @@ class RateNetwork:
         pl.xlabel('Time (s)')
         pl.ylabel(r'$\theta$')
         pl.colorbar()
-        
-    def save_results(self, fname):
-        np.savez(fname, u=self.ActU, x=self.ActX, hE=self.ActHE, hI=self.ActHI, 
-                 rE=self.ActRE, rI=self.ActRI)
     
     def process_stumulus(self, t):
         if self.stim_idx < len(self.stim_duration):
@@ -209,20 +199,3 @@ class RateNetwork:
         self.set_initial_values(u=U)
         
         return self
-    
-    @staticmethod
-    def get_hash_from_params(params_dict):
-        import hashlib
-        name = '_'.join([key + '_' + str(params_dict[key]) for key in RateNetwork.params_arr])
-        return hashlib.md5(name.encode('utf-8')).hexdigest()
-    
-    @staticmethod
-    def load_results(fname):
-        with np.load(fname) as data:
-            u = data['u']
-            x = data['x']
-            hE = data['hE']
-            hI = data['hI']
-            rE = data['rE']
-            rI = data['rI']
-        return u, x, hE, hI, rE, rI
