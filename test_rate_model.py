@@ -7,6 +7,7 @@ import numpy as np
 import numpy.testing as npt
 import rate_model as rm
 import sqlite_routines
+import pytest
 
 params_dict_stationary = {
     # main params
@@ -77,7 +78,7 @@ stim_burst = {
     'stim_type': ['trunc_cos']
 }
 
-def simulate(params, stim_params, backend='c'):
+def simulate(params, stim_params, backend='python'):
     rate_network = rm.RateNetwork.init_all_params(**params)
     
     rate_network.set_stimuli(**stim_params)
@@ -86,26 +87,25 @@ def simulate(params, stim_params, backend='c'):
     rate_network.simulate_facil(backend=backend)
     return rate_network.ActX, rate_network.ActU, rate_network.ActHE, rate_network.ActHI
 
-def test_stationary():
-    x, u, hE, hI = simulate(params_dict_stationary, stim_stationary)
-    x_, u_, hE_, hI_ = sqlite_routines.get_results(params_dict_stationary, stim_stationary)
+@pytest.mark.parametrize('backend', ['c', 'python'])
+@pytest.mark.parametrize('params, stim_params', 
+                          [(params_dict_stationary, stim_stationary), 
+                           (params_dict_burst, stim_burst)])
+def test_sim(params, stim_params, backend):
+    x, u, hE, hI = simulate(params, stim_params, backend)
+    x_, u_, hE_, hI_ = sqlite_routines.get_results(params, stim_params)
     npt.assert_allclose(x, x_, atol=0.0001)
     npt.assert_allclose(u, u_, atol=0.0001)
     npt.assert_allclose(hE, hE_, atol=0.0001)
     npt.assert_allclose(hI, hI_, atol=0.0001)
 
-def test_burst():
-    x, u, hE, hI = simulate(params_dict_burst, stim_burst)
-    x_, u_, hE_, hI_ = sqlite_routines.get_results(params_dict_burst, stim_burst)
-    npt.assert_allclose(x, x_, atol=0.0001)
-    npt.assert_allclose(u, u_, atol=0.0001)
-    npt.assert_allclose(hE, hE_, atol=0.0001)
-    npt.assert_allclose(hI, hI_, atol=0.0001)
-    
-if __name__ == '__main__':
+def fill_tables():
     x, u, hE, hI = simulate(params_dict_stationary, stim_stationary)
     sqlite_routines.create_table()
     sqlite_routines.save_results(x, u, hE, hI, params_dict_stationary, stim_stationary)
     
     x, u, hE, hI = simulate(params_dict_burst, stim_burst)
     sqlite_routines.save_results(x, u, hE, hI, params_dict_burst, stim_burst)
+    
+if __name__ == '__main__':
+    fill_tables()
