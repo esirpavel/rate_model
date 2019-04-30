@@ -8,7 +8,7 @@ import matplotlib.pylab as pl
 import rate_model as rm
 
 if __name__ == '__main__':
-    params_dict_Itskov = {
+    params_dict_stationary = {
         # main params
         'sim_time': 150.,
         'dt': 0.001,
@@ -33,13 +33,12 @@ if __name__ == '__main__':
         'tau': 0.01,
         'alpha': 1.5,
     }
-       
-    # Parameters from Yuanyuan
-    params_dict_Yuanyuan = {
+    
+    params_dict_burst = {
         # main params
         'sim_time': 200.,
-        'dt': 0.0005,
-        'sampl_dt': 0.0005,
+        'dt': 0.001,
+        'sampl_dt': 0.001,
         'N': 90,
         
         'J0': -1.*2*np.pi,
@@ -60,8 +59,7 @@ if __name__ == '__main__':
     }
 
     
-    # stimulating params for Itskov
-    stim_Itskov = {
+    stim_stationary = {
         'stim_start': [.0],
         'stim_duration': [.05],
         'stim_ampl': [5.0],
@@ -71,7 +69,7 @@ if __name__ == '__main__':
     }
 
     # stimulating params for Yuanyuan
-    stim_Yuanyuan = {
+    stim_burst = {
         'stim_start': [.0],
         'stim_duration': [.05],
         'stim_ampl': [390.0],
@@ -81,8 +79,8 @@ if __name__ == '__main__':
     }
     
     #%%
-    stim_dict = stim_Itskov
-    param_dict = params_dict_Itskov
+    stim_dict = stim_stationary
+    param_dict = params_dict_stationary
     rate_network = rm.RateNetwork.init_all_params(**param_dict)
     for st_pos in range(-180, 180, 30):
         stim_dict['stim_pos'] = [st_pos]
