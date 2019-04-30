@@ -94,10 +94,10 @@ def simulate(params, stim_params, backend='python'):
 def test_sim(params, stim_params, backend):
     x, u, hE, hI = simulate(params, stim_params, backend)
     x_, u_, hE_, hI_ = sqlite_routines.get_results(params, stim_params)
-    npt.assert_allclose(x, x_, atol=0.0001)
-    npt.assert_allclose(u, u_, atol=0.0001)
-    npt.assert_allclose(hE, hE_, atol=0.0001)
-    npt.assert_allclose(hI, hI_, atol=0.0001)
+    npt.assert_allclose(x, x_, atol=0.00001)
+    npt.assert_allclose(u, u_, atol=0.00001)
+    npt.assert_allclose(hE, hE_, atol=0.00001)
+    npt.assert_allclose(hI, hI_, atol=0.00001)
 
 def fill_tables():
     x, u, hE, hI = simulate(params_dict_stationary, stim_stationary)
