@@ -2,5 +2,5 @@
 *.so
 .*
 !.gitignore
-*/
-cycover_ring.cpp
+__pycache__/
+rate_model/cycover_ring.cpp
