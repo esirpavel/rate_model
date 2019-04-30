@@ -138,7 +138,7 @@ class RateNetwork:
         self.x[:], self.u[:], self.hE[:], self.hI = self.x_iv, self.u_iv, self.hE_iv, self.hI_iv
         
         if backend == 'c':
-            import cycover_ring as rn
+            from . import cycover_ring as rn
             rn.set_calc_params(self.N, self.n_istep, self.dt, int(self.sampl_dt/self.dt))
             rn.set_params(self.U, self.J_IE, self.J_EI, self.tau, self.tau_d, 
                           self.tau_f, self.I0, self.alpha)
