@@ -9,19 +9,19 @@ import cython
 
 cdef extern from "ring.h": 
     void setCalcParams(unsigned N, unsigned Tsim, double h, unsigned recH)
-    
+
     void setParams(double U, double J_IE, double J_EI, double tau, double tau_d, double tau_f, double I0, double alpha)
 
     void initArrays(double* x, double* u, double* hE, double hI, double* W, float* xRes, float* uRes, float* hERes, float* hIRes)
-    
+
     void setStimuli(unsigned* stim_start, unsigned* stim_duration, double* stim_ampl, 
                     double* stim_pos, double* stim_width, unsigned* stim_type, unsigned num_stim)
-    
+
     void c_integrate()
-    
+
 def set_calc_params(unsigned N, Tsim, h, recH):
     setCalcParams(N, Tsim, h, recH)
-    
+
 def set_params(double U, double J_IE, double J_EI, double tau, double tau_d, double tau_f, double I0, double alpha):
     setParams(U, J_IE, J_EI, tau, tau_d, tau_f, I0, alpha)
 
@@ -59,6 +59,6 @@ def set_stimuli(np.ndarray[np.uint32_t, ndim=1] stim_start,
                 <double*> stim_width.data, 
                 <unsigned*> stim_type.data, 
                 num_stim)
-    
+
 def integrate():
     c_integrate()

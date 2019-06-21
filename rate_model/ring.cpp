@@ -27,7 +27,7 @@ namespace ring{
     double* mRight; // multiplication of mArr to xArr
     double* mxOld;  // multiplication of mArr to xArr
     double* Iext;
-
+    
     unsigned stim_idx = 0;
     bool is_stimulating = false;
     
@@ -48,9 +48,9 @@ namespace ring{
     double I0;
     double J_EI;
     double J_IE;
-
+    
     double alpha = 1.5;
-
+    
     unsigned Tsim;
     double h;
     unsigned recH;
@@ -169,9 +169,9 @@ void c_integrate(){
         }
         rI = gFun(hI);
         hI += (-hI + J_IE*I_inh_exc/N)*h/tau;
-
+        
         cblas_dgemv(CblasRowMajor, CblasNoTrans, N, N, 1.0, wArr, N, mxOld, 1, 0.0, mRight, 1);
-
+        
         process_stumulus(t);
         
         for (unsigned i = 0; i < N; i++){
@@ -192,7 +192,7 @@ void c_integrate(){
                 xRes[N*t/recH + i] = xArr[i];
                 uRes[N*t/recH + i] = uArr[i];
                 hERes[N*t/recH + i] = hEArr[i];
-
+                
                 hIRes[t/recH] = hI;
             }
        }

@@ -2,7 +2,7 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 class RateNetwork:
-   
+
     @staticmethod
     def gFun(x, alpha=1.5, cutoff=10.):
         if type(x) == np.ndarray:
@@ -43,7 +43,7 @@ class RateNetwork:
         self.ActRE = np.zeros((n_rstep, N), dtype='float32')
         self.ActRI = np.zeros(n_rstep, dtype='float32')
         self.tm = np.linspace(0, sim_time, n_rstep)
-    
+
     @staticmethod
     def trunc_cos(x, J0, J1):
         indices = np.nonzero(np.abs(x) < np.arccos(J0/J1))
@@ -51,7 +51,7 @@ class RateNetwork:
         res[:] = J0
         res[indices] = J1*np.cos(x[indices])
         return res    
-    
+
     def set_weights(self, J0, J1, J_EI, J_IE, eps=0., conn_width=1.3, 
                     conn_type='gauss', seed=0):
         self.J0 = J0
@@ -71,7 +71,7 @@ class RateNetwork:
             self.W = self.trunc_cos(self.dx/conn_width, J0, J1)/self.N + W_heter
         else:
             raise RuntimeError('Non-existent connectivity kernel type')
-    
+
     def set_initial_values(self, hE=0., hI=0., x=1., u=None):
         self.hE_iv = hE
         self.hI_iv = hI
@@ -80,7 +80,7 @@ class RateNetwork:
             self.u_iv = self.U
         else:
             self.u_iv = u
-    
+
     def set_params(self, U, I0, tau_d, tau_f, tau, alpha):
         self.U = U
         self.I0 = I0
@@ -90,7 +90,7 @@ class RateNetwork:
         self.alpha = alpha
         
         self.u[:] = self.U
-    
+
     def plot_simul(self, figsize = (10, 8)):
         pl.figure(figsize=figsize)
         pl.pcolormesh(self.tm, np.degrees(self.pos), self.ActRE.T)
@@ -101,7 +101,7 @@ class RateNetwork:
         pl.xlabel('Time (s)')
         pl.ylabel(r'$\theta$')
         pl.colorbar()
-    
+
     def process_stumulus(self, t):
         if self.stim_idx < len(self.stim_duration):
             if ((not self.is_stimulating) and 
@@ -120,7 +120,7 @@ class RateNetwork:
                 self.is_stimulating = False
                 self.Iext[:] = 0.
                 self.stim_idx += 1
-    
+
     def set_stimuli(self, stim_start, stim_duration, stim_ampl, stim_pos, 
                     stim_width, stim_type):
         self.Iext = np.zeros(self.N)
@@ -133,7 +133,7 @@ class RateNetwork:
         self.stim_pos = stim_pos
         self.stim_width = stim_width
         self.stim_type = stim_type
-        
+
     def simulate_facil(self, backend='python'):
         self.x[:], self.u[:], self.hE[:], self.hI = self.x_iv, self.u_iv, self.hE_iv, self.hI_iv
         
@@ -192,7 +192,7 @@ class RateNetwork:
     @staticmethod
     def init_all_params(sim_time, dt, sampl_dt, N, J0, J1, J_EI, J_IE, 
                         eps, conn_width, conn_type, seed, U, I0, tau_d, tau_f, tau, alpha):
-
+        
         self = RateNetwork(sim_time, dt, sampl_dt, N)
         self.set_weights(J0, J1, J_EI, J_IE, eps, conn_width, conn_type, seed)
         self.set_params(U, I0, tau_d, tau_f, tau, alpha)

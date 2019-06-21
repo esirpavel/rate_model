@@ -15,7 +15,7 @@ params_dict_stationary = {
     'dt': 0.001,
     'sampl_dt': 0.01,
     'N': 90,
-
+    
     # connectivity params
     'J0': -10.0,
     'J1': 16.0,
@@ -25,7 +25,7 @@ params_dict_stationary = {
     'conn_width': 1.0,
     'conn_type' : 'cos',
     'seed': 0,
-
+    
     # actvity params
     'U': 0.05,
     'I0': 10.0,
@@ -34,7 +34,7 @@ params_dict_stationary = {
     'tau': 0.01,
     'alpha': 1.5,
 }
-   
+
 params_dict_burst = {
     # main params
     'sim_time': 10.,
@@ -106,6 +106,6 @@ def fill_tables():
     
     x, u, hE, hI = simulate(params_dict_burst, stim_burst)
     sqlite_routines.save_results(x, u, hE, hI, params_dict_burst, stim_burst)
-    
+
 if __name__ == '__main__':
     fill_tables()
