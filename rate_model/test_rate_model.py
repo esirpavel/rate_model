@@ -6,7 +6,7 @@ Created on Mon Mar 11 09:10:10 2019
 import numpy as np
 import numpy.testing as npt
 import rate_model as rm
-from rate_model import sqlite_routines
+import sqlite_routines
 import pytest
 
 params_dict_stationary = {
