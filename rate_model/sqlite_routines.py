@@ -8,9 +8,7 @@ import hashlib
 import json
 import io
 import numpy as np
-
-db_fname = 'test_results.db'
-db_tname = 'test_sim_results'
+from config import * 
 
 def adapt_array(arr):
     """
@@ -29,7 +27,8 @@ def convert_array(text):
 sqlite3.register_adapter(np.ndarray, adapt_array)
 sqlite3.register_converter("array", convert_array)
 
-def create_table(fname=db_fname, tname=db_tname):
+def create_table(db_fname=db_fname, tname=db_tname):
+    fname = test_results_db_path + db_fname
     with sqlite3.connect(fname, detect_types=sqlite3.PARSE_DECLTYPES) as conn:
         cur = conn.cursor()
         create_table_query = """
@@ -47,11 +46,12 @@ def create_table(fname=db_fname, tname=db_tname):
         cur.execute(create_table_query)
 
 def save_results(x, u, hE, hI, params, stim_params, 
-                 fname=db_fname, tname=db_tname):
+                 db_fname=db_fname, tname=db_tname):
     params_str = json.dumps(params)
     stim_params_str = json.dumps(stim_params)
     md5_hash = get_params_md5(params, stim_params)
     
+    fname = test_results_db_path + db_fname
     with sqlite3.connect(fname, detect_types=sqlite3.PARSE_DECLTYPES) as conn:
         cur = conn.cursor()
         insert_tbl_query = """
@@ -69,8 +69,9 @@ def save_results(x, u, hE, hI, params, stim_params,
         cur.execute(insert_tbl_query, 
                     (params_str, stim_params_str, md5_hash, x, u, hE, hI))
 
-def get_results(params, stim_params, fname=db_fname, tname=db_tname):
+def get_results(params, stim_params, db_fname=db_fname, tname=db_tname):
     md5_hash = get_params_md5(params, stim_params)
+    fname = test_results_db_path + db_fname
     with sqlite3.connect(fname, detect_types=sqlite3.PARSE_DECLTYPES) as conn:
         cur = conn.cursor()
         get_tbl_query = """ 
