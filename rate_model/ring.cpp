@@ -8,6 +8,7 @@
 #include "ring.h"
 #include <cblas.h>
 #include <iostream>
+#include <random>
 
 namespace ring{
     double* wArr; // 2D matrix of weights stored in row major order
@@ -15,6 +16,7 @@ namespace ring{
     double* xArr;
     double* uArr;
     double* hEArr;
+    double* Inoise;
     double hI;
     
     float* xRes;
@@ -38,6 +40,12 @@ namespace ring{
     double* stim_width;
     unsigned* stim_type;
     unsigned num_stim;
+    
+    // noise params
+    double D = 0.0;
+    double tau_n = 0.1;
+    unsigned seed = 0;
+    std::mt19937_64 rng;
     
     unsigned N;
     double tau_d;
@@ -76,6 +84,13 @@ void setParams(double U, double J_IE, double J_EI,
     ring::J_EI = J_EI;
 }
 
+void setNoiseParams(double D, double tau_n, unsigned seed){
+    ring::D = D;
+    ring::tau_n = tau_n;
+    ring::seed = seed;
+    ring::rng.seed(seed);
+}
+
 void initArrays(double* x, double* u, double* hE, double hI,
                 double* W, float* xRes, float* uRes, float* hERes, float* hIRes){
     ring::xArr = x;
@@ -92,6 +107,7 @@ void initArrays(double* x, double* u, double* hE, double hI,
     ring::rEArr = new double[ring::N];
     ring::mxOld = new double[ring::N];
     ring::mRight = new double[ring::N];
+    ring::Inoise = new double[ring::N]();
 }
 
 void setStimuli(unsigned* stim_start, unsigned* stim_duration, double* stim_ampl, 
@@ -159,7 +175,8 @@ double gFun(double x){
 
 void c_integrate(){
     double I_inh_exc; // global excitatory current to inhibitory pool
-    
+    std::normal_distribution<double> randn(0., 1.);
+
     for (unsigned t = 0; t < Tsim; t++){
         I_inh_exc = 0.0;
         for (unsigned i = 0; i < N; i++){
@@ -175,7 +192,9 @@ void c_integrate(){
         process_stumulus(t);
         
         for (unsigned i = 0; i < N; i++){
-            hEArr[i] += (-hEArr[i] + mRight[i] + I0 + Iext[i] - J_EI*rI)*h/tau;
+            hEArr[i] += (-hEArr[i] + mRight[i] + I0 + Inoise[i] + Iext[i] - J_EI*rI)*h/tau;
+            
+            Inoise[i] += (-Inoise[i]/tau_n + D*sqrt(2./(h*tau_n))*randn(rng))*h;
             
             if (tau_d == 0.0){
                 xArr[i] = 1.0;

@@ -12,6 +12,8 @@ void setCalcParams(unsigned N, unsigned Tsim, double h, unsigned recH);
 
 void setParams(double U, double J_IE, double J_EI, double tau, double tau_d, double tau_f, double I0, double alpha);
 
+void setNoiseParams(double D, double tau_n, unsigned seed);
+
 void initArrays(double* x, double* u, double* hE, double hI,
                 double* W, float* xRes, float* uRes, float* hERes, float* hIRes);
 

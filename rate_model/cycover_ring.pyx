@@ -12,6 +12,8 @@ cdef extern from "ring.h":
 
     void setParams(double U, double J_IE, double J_EI, double tau, double tau_d, double tau_f, double I0, double alpha)
 
+    void setNoiseParams(double D, double tau_n, unsigned seed);
+
     void initArrays(double* x, double* u, double* hE, double hI, double* W, float* xRes, float* uRes, float* hERes, float* hIRes)
 
     void setStimuli(unsigned* stim_start, unsigned* stim_duration, double* stim_ampl, 
@@ -24,6 +26,9 @@ def set_calc_params(unsigned N, Tsim, h, recH):
 
 def set_params(double U, double J_IE, double J_EI, double tau, double tau_d, double tau_f, double I0, double alpha):
     setParams(U, J_IE, J_EI, tau, tau_d, tau_f, I0, alpha)
+
+def set_noise_params(double D, double tau_n, unsigned seed):
+    setNoiseParams(D, tau_n, seed)
 
 def init_arrays(np.ndarray[np.float64_t, ndim=1] x, 
                 np.ndarray[np.float64_t, ndim=1] u, 

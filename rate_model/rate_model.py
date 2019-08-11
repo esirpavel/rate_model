@@ -34,6 +34,7 @@ class RateNetwork:
         self.x = np.ones(N)
         self.u = np.ones(N)
         self.hE = np.zeros(N)
+        self.Inoise = np.zeros(N)
         
         n_rstep = int((sim_time)/sampl_dt)
         self.ActU = np.zeros((n_rstep, N), dtype='float32')
@@ -91,11 +92,16 @@ class RateNetwork:
         
         self.u[:] = self.U
 
+    def set_noise_params(self, D=0., tau_n=0.1, seed=0):
+        self.D = D
+        self.tau_n = tau_n
+        self.seed = seed
+
     def plot_simul(self, figsize = (10, 8)):
         pl.figure(figsize=figsize)
         pl.pcolormesh(self.tm, np.degrees(self.pos), self.ActRE.T)
         pl.plot(self.tm, np.degrees(self.get_angle(self.ActU)), lw=3., c='C3')
-        pl.plot(self.tm, np.degrees(self.get_angle(self.ActRE)), lw=3., c='C1')
+        # pl.plot(self.tm, np.degrees(self.get_angle(self.ActRE)), lw=3., c='C1')
         pl.xlim((0, self.sim_time))
         pl.ylim((-180, 180))
         pl.xlabel('Time (s)')
@@ -142,6 +148,9 @@ class RateNetwork:
             rn.set_calc_params(self.N, self.n_istep, self.dt, int(self.sampl_dt/self.dt))
             rn.set_params(self.U, self.J_IE, self.J_EI, self.tau, self.tau_d, 
                           self.tau_f, self.I0, self.alpha)
+
+            rn.set_noise_params(self.D, self.tau_n, self.seed)
+
             rn.init_arrays(self.x, self.u, self.hE, self.hI, self.W, self.ActX, 
                            self.ActU, self.ActHE, self.ActHI)
             
@@ -162,6 +171,8 @@ class RateNetwork:
             self.ActRE = self.gFun(self.ActHE)
             self.ActRI = self.gFun(self.ActHI)
         elif backend == 'python':
+            np.random.seed(self.seed)
+
             for i in range(0, self.n_istep):
                 self.process_stumulus(i)
                 
@@ -169,12 +180,17 @@ class RateNetwork:
                 rI = self.gFun(self.hI, self.alpha)
                 
                 dx = (1.0 - self.x)/self.tau_d - self.u*self.x*rE
-                du = (self.U - self.u)/self.tau_f + self.U*(1 - self.u)*rE
-                dhE = (-self.hE + np.dot(self.W, self.u*self.x*rE) - self.J_EI*rI + self.I0 + self.Iext)/self.tau
+                du = (self.U - self.u)/self.tau_f + self.U*(1. - self.u)*rE
+                dInoise = (-self.Inoise/self.tau_n + self.D*np.sqrt(2./(self.dt*self.tau_n))*np.random.randn(self.N))
+                
+                dhE = (-self.hE + np.dot(self.W, self.u*self.x*rE) -
+                        self.J_EI*rI + self.I0 + self.Inoise + self.Iext)/self.tau
                 dhI = (-self.hI + self.J_IE*np.sum(rE)/self.N)/self.tau
                 
                 self.x[:] = self.x + dx*self.dt
                 self.u[:] = self.u + du*self.dt
+                self.Inoise[:] = self.Inoise + dInoise*self.dt
+                
                 self.hE[:] = self.hE + dhE*self.dt
                 self.hI = self.hI + dhI*self.dt
                 
@@ -197,5 +213,6 @@ class RateNetwork:
         self.set_weights(J0, J1, J_EI, J_IE, eps, conn_width, conn_type, seed)
         self.set_params(U, I0, tau_d, tau_f, tau, alpha)
         self.set_initial_values(u=U)
+        self.set_noise_params()
         
         return self
