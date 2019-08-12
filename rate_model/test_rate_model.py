@@ -24,20 +24,30 @@ def simulate(params, stim_params, backend='python'):
                           [(params_dict_stationary, stim_stationary), 
                            (params_dict_burst, stim_burst)])
 def test_sim(params, stim_params, backend):
-    x, u, hE, hI = simulate(params, stim_params, backend)
-    x_, u_, hE_, hI_ = sqlite_routines.get_results(params, stim_params)
+    params_dict = {}
+    params_dict.update(simulation_params)
+    params_dict.update(params)
+    
+    x, u, hE, hI = simulate(params_dict, stim_params, backend)
+    x_, u_, hE_, hI_ = sqlite_routines.get_results(params_dict, stim_params)
     npt.assert_allclose(x, x_, atol=0.00001)
     npt.assert_allclose(u, u_, atol=0.00001)
     npt.assert_allclose(hE, hE_, atol=0.00001)
     npt.assert_allclose(hI, hI_, atol=0.00001)
 
 def fill_tables():
-    x, u, hE, hI = simulate(params_dict_stationary, stim_stationary)
     sqlite_routines.create_table()
-    sqlite_routines.save_results(x, u, hE, hI, params_dict_stationary, stim_stationary)
     
-    x, u, hE, hI = simulate(params_dict_burst, stim_burst)
-    sqlite_routines.save_results(x, u, hE, hI, params_dict_burst, stim_burst)
+    params_dict = {}
+    params_dict.update(simulation_params)
+    
+    params_dict.update(params_dict_stationary)
+    x, u, hE, hI = simulate(params_dict, stim_stationary)
+    sqlite_routines.save_results(x, u, hE, hI, params_dict, stim_stationary)
+    
+    params_dict.update(params_dict_burst)
+    x, u, hE, hI = simulate(params_dict, stim_burst)
+    sqlite_routines.save_results(x, u, hE, hI, params_dict, stim_burst)
 
 if __name__ == '__main__':
     fill_tables()

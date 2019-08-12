@@ -7,13 +7,14 @@ test_results_db_path = "../data/"
 db_fname = 'test_results.db'
 db_tname = 'test_sim_results'
 
-params_dict_stationary = {
-    # main params
+simulation_params = {
     'sim_time': 10.,
     'dt': 0.001,
-    'sampl_dt': 0.01,
-    'N': 90,
-    
+    'sampl_dt': 0.001,
+    'N': 90
+}
+
+params_dict_stationary = {
     # connectivity params
     'J0': -10.0,
     'J1': 16.0,
@@ -34,12 +35,6 @@ params_dict_stationary = {
 }
 
 params_dict_burst = {
-    # main params
-    'sim_time': 10.,
-    'dt': 0.001,
-    'sampl_dt': 0.001,
-    'N': 90,
-    
     'J0': -1.*2*np.pi,
     'J1': 12.*2*np.pi,
     'J_EI': 1.9,
@@ -58,13 +53,6 @@ params_dict_burst = {
 }
 
 params_dict_Tsodyks = {
-    # main params
-    'sim_time': 2.,
-    'dt': 0.001,
-    'sampl_dt': 0.001,
-    'N': 90,
-    
-    # connectivity params
     'J0': -10.0,
     'J1': 40.0,
     'J_EI': 6.0,
@@ -74,7 +62,6 @@ params_dict_Tsodyks = {
     'conn_type' : 'gauss',
     'seed': 0,
     
-    # actvity params
     'U': 0.3,
     'I0': 5.0,
     'tau_d': 0.3,
@@ -102,7 +89,6 @@ stim_burst = {
     'stim_type': ['trunc_cos']
 }
 
-# stimulation params for Tsodyks
 stim_Tsodyks = {
     'stim_start': [.0],
     'stim_duration': [.05],
