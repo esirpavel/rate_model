@@ -27,6 +27,7 @@ def test_sim(params, stim_params, backend):
     params_dict = {}
     params_dict.update(simulation_params)
     params_dict.update(params)
+    params_dict.update({'eps': 0.5})
     
     x, u, hE, hI = simulate(params_dict, stim_params, backend)
     x_, u_, hE_, hI_ = sqlite_routines.get_results(params_dict, stim_params)
@@ -42,10 +43,12 @@ def fill_tables():
     params_dict.update(simulation_params)
     
     params_dict.update(params_dict_stationary)
+    params_dict.update({'eps': 0.5})
     x, u, hE, hI = simulate(params_dict, stim_stationary)
     sqlite_routines.save_results(x, u, hE, hI, params_dict, stim_stationary)
     
     params_dict.update(params_dict_burst)
+    params_dict.update({'eps': 0.5})
     x, u, hE, hI = simulate(params_dict, stim_burst)
     sqlite_routines.save_results(x, u, hE, hI, params_dict, stim_burst)
 
