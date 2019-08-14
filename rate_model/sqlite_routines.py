@@ -8,7 +8,7 @@ import hashlib
 import json
 import io
 import numpy as np
-from config import * 
+from params import * 
 
 def adapt_array(arr):
     """

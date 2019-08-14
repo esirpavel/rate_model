@@ -8,7 +8,7 @@ import numpy.testing as npt
 import rate_model as rm
 import sqlite_routines
 import pytest
-from config import *
+from params import *
 
 def simulate(params, stim_params, backend='python'):
     rate_network = rm.RateNetwork.init_all_params(**params)

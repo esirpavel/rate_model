@@ -6,7 +6,7 @@ Created on Thu Feb 28 19:39:36 2019
 import numpy as np
 import matplotlib.pylab as pl
 import rate_model as rm
-from rate_model.config import *
+from rate_model.params import *
 
 sim_params = {
     'sim_time': 150.,
