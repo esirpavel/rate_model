@@ -73,8 +73,8 @@ params_dict_Tsodyks = {
 
 stim_stationary = {
     'stim_start': [.0],
-    'stim_duration': [.05],
-    'stim_ampl': [5.0],
+    'stim_duration': [.1],
+    'stim_ampl': [20.0],
     'stim_pos': [0.0],
     'stim_width': [1.],
     'stim_type': ['cos']
