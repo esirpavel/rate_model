@@ -142,7 +142,6 @@ double stimFunc(double x, double width, unsigned type){
                 return 0.;
             }
         case 4:
-            // @TODO uniform mask
             return 1;
     }
 }

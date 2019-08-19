@@ -97,17 +97,6 @@ class RateNetwork:
         self.tau_n = tau_n
         self.seed = seed
 
-    def plot_simul(self, figsize = (10, 8)):
-        pl.figure(figsize=figsize)
-        pl.pcolormesh(self.tm, np.degrees(self.pos), self.ActRE.T)
-        pl.plot(self.tm, np.degrees(self.get_angle(self.ActU)), lw=3., c='C3')
-        # pl.plot(self.tm, np.degrees(self.get_angle(self.ActRE)), lw=3., c='C1')
-        pl.xlim((0, self.sim_time))
-        pl.ylim((-180, 180))
-        pl.xlabel('Time (s)')
-        pl.ylabel(r'$\theta$')
-        pl.colorbar()
-
     def process_stumulus(self, t):
         if self.stim_idx < len(self.stim_duration):
             if ((not self.is_stimulating) and 
