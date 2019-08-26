@@ -36,7 +36,10 @@ class RateNetwork:
         self.hE = np.zeros(N)
         self.Inoise = np.zeros(N)
         
-        n_rstep = int((sim_time)/sampl_dt)
+        n_sim_time = int(sim_time/dt)
+        n_sampl_dt = int(sampl_dt/dt)
+        n_rstep = int((n_sim_time + n_sampl_dt - 1) / n_sampl_dt)
+        
         self.ActU = np.zeros((n_rstep, N), dtype='float32')
         self.ActX = np.zeros((n_rstep, N), dtype='float32')
         self.ActHE = np.zeros((n_rstep, N), dtype='float32')
@@ -108,7 +111,7 @@ class RateNetwork:
                 elif self.stim_type[self.stim_idx] == 'gauss':
                     self.Iext[:] = self.stim_ampl[self.stim_idx]*np.exp(-(dx1/self.stim_width[self.stim_idx])**2/2)
                 elif self.stim_type[self.stim_idx] == 'trunc_cos':
-                    self.Iext[:] = self.stim_ampl[self.stim_idx]*self.trunc_cos(dx1/self.stim_width, 0, 1)
+                    self.Iext[:] = self.stim_ampl[self.stim_idx]*self.trunc_cos(dx1/self.stim_width[self.stim_idx], 0, 1)
             elif (self.is_stimulating and 
                     t == int((self.stim_start[self.stim_idx] + 
                               self.stim_duration[self.stim_idx])/self.dt)):

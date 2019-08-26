@@ -14,7 +14,7 @@ simulation_params = {
     'N': 90
 }
 
-params_dict_stationary = {
+params_nops = {
     # connectivity params
     'J0': -10.0,
     'J1': 16.0,
@@ -34,7 +34,7 @@ params_dict_stationary = {
     'alpha': 1.5,
 }
 
-params_dict_burst = {
+params_ps = {
     'J0': -1.*2*np.pi,
     'J1': 12.*2*np.pi,
     'J_EI': 1.9,
@@ -52,7 +52,7 @@ params_dict_burst = {
     'alpha': 1.5,
 }
 
-params_dict_Tsodyks = {
+params_tsodyks = {
     'J0': -10.0,
     'J1': 40.0,
     'J_EI': 6.0,
@@ -71,7 +71,7 @@ params_dict_Tsodyks = {
 }
 
 
-stim_stationary = {
+stim_nops = {
     'stim_start': [.0],
     'stim_duration': [.1],
     'stim_ampl': [20.0],
@@ -80,7 +80,7 @@ stim_stationary = {
     'stim_type': ['cos']
 }
 
-stim_burst = {
+stim_ps = {
     'stim_start': [.0],
     'stim_duration': [.05],
     'stim_ampl': [390.0],
@@ -89,12 +89,12 @@ stim_burst = {
     'stim_type': ['trunc_cos']
 }
 
-stim_Tsodyks = {
+stim_tsodyks = {
     'stim_start': [.0],
     'stim_duration': [.05],
-    'stim_ampl': [65.0],
+    'stim_ampl': [70.0],
     'stim_pos': [0.0],
-    'stim_width': [.2],
+    'stim_width': [.5],
     'stim_type': ['gauss']
 }
 
