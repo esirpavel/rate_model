@@ -2,16 +2,18 @@
 
 import numpy as np
 
-test_results_db_path = "../data/"
-
-db_fname = 'test_results.db'
-db_tname = 'test_sim_results'
-
 simulation_params = {
     'sim_time': 10.,
     'dt': 0.001,
     'sampl_dt': 0.001,
     'N': 90
+}
+
+# dynamical noise params
+noise_params = {
+    'D': 0.,
+    'tau_n': 0.1,
+    'seed': 0
 }
 
 params_nops = {

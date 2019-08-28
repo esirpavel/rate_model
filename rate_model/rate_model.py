@@ -197,6 +197,9 @@ class RateNetwork:
         else:
             raise RuntimeError('Non-existent backend')
 
+    def __del__(self):
+        del self.ActU, self.ActX, self.ActHE, self.ActHI, self.ActRE, self.ActRI
+
     @staticmethod
     def init_all_params(sim_time, dt, sampl_dt, N, J0, J1, J_EI, J_IE, 
                         eps, conn_width, conn_type, seed, U, I0, tau_d, tau_f, tau, alpha):

@@ -8,7 +8,10 @@ import hashlib
 import json
 import io
 import numpy as np
-from params import * 
+
+test_results_db_path = "../data/"
+db_fname = 'test_results.db'
+db_tname = 'test_sim_results'
 
 def adapt_array(arr):
     """
@@ -41,8 +44,9 @@ def create_table(db_fname=db_fname, tname=db_tname):
             u array, 
             hE array, 
             hI array, 
-            perfomed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+            performed_at TDATETIME DEFAULT (DATETIME(CURRENT_TIMESTAMP, 'LOCALTIME')))
         """.format(tname)
+            # performed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
         cur.execute(create_table_query)
 
 def save_results(x, u, hE, hI, params, stim_params, 
